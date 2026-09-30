@@ -26,7 +26,8 @@ Update terakhir: 2026-09-29 (M3b + M5 selesai; sidebar layout diperbaiki; M4 dit
 | **M2a-e** — Endpoint API (meta, admin, sales, ops, membership, marketing) | ✅ Selesai | 23 endpoint, port persis dari logic MCP+dashboard lama |
 | **M3** — ETL (sync-esb → Go) | ✅ Selesai (core) | Live-tested ke API ESB staging sungguhan, berhasil |
 | **Migrasi Taiga UI** | ✅ Selesai | PrimeNG dilarang (lisensi komersial v22+), ganti Taiga UI |
-| **SSO (operations-sso)** | ⏸️ Ditunda | Keputusan user — endpoint API masih terbuka tanpa auth |
+| **Login lokal (email + password)** | ✅ Selesai | Atas permintaan user: halaman `/login`, sesi server-side, seluruh `/api/*` diproteksi (lihat bawah) |
+| **SSO (operations-sso)** | ⏸️ Ditunda | Standar tim; login lokal dibuat supaya sesinya bisa dipakai SSO nanti |
 | **M3b** — Scheduling produksi ETL | ✅ Selesai | Scheduler in-process di `serve`: 06:00 WIB + catchup + advisory lock + webhook alert (lihat bawah) |
 | **M4** — Port 10 tools MCP ke Go | ❌ Belum | Reuse service layer M2 |
 | **M5** — Wiring UI (6 halaman) | ✅ Selesai | Overview, Sales, Ops, Membership, Marketing, Kelola User tersambung ke API asli (lihat bawah) |
@@ -78,9 +79,21 @@ Tarik data ESB untuk rentang tanggal pilihan (maks 62 hari, sampai hari ini) dar
 - **Celah yang perlu diketahui:** sync harian (06:00 WIB) hanya mengambil tanggal yang BELUM pernah sukses — tidak pernah menarik ulang tanggal lampau. Jadi void yang terjadi setelah tanggal itu tersinkron hanya masuk lewat Perbarui manual. Opsi: nightly juga me-refresh N hari terakhir (belum dikerjakan, butuh keputusan).
 - **TODO(SSO):** endpoint ini (seperti /api/admin/*) belum dibatasi admin karena belum ada sesi.
 
+### Login lokal (`api/internal/auth`, `web-app/src/app/core/auth*.ts`, `features/login`)
+Email + password, dibuat atas permintaan user karena SSO ditunda. **Catatan:** standar tim (skill esb-ops-dev-stack) mewajibkan operations-sso; ini bukan penggantinya. Lapisan sesinya (cookie → tabel `sessions` → user) sengaja terpisah dari cara sesi dibuat, jadi SSO nanti cukup membuat baris `sessions` yang sama.
+- **Sesi di database** (migration `20260930100001_auth`): cookie `ds_session` (HttpOnly, SameSite=Lax, Secure di production) berisi token acak 256-bit; yang disimpan hanya SHA-256-nya. Sesi 12 jam (`SESSION_TTL_HOURS`). Menghapus user atau mengganti/mereset password mencabut sesinya.
+- **Password:** bcrypt cost 12, minimal 8 karakter, maksimal 72 byte (batas bcrypt). Kegagalan login selalu berpesan sama ("Email atau password salah") dan memakan waktu bcrypt yang sama, jadi tidak membocorkan email mana yang terdaftar.
+- **Anti brute-force** (`auth/limiter.go`, in-memory per proses): 5 gagal / 15 menit per email dan 30 per IP → 429 + `Retry-After`, berlaku juga untuk password yang benar. IP diambil dari `X-Forwarded-For` (nginx meneruskannya); pembatas per-email adalah perlindungan utama.
+- **Akses:** hanya `/healthz` dan `POST /api/auth/login` yang publik; sisanya butuh login, `/api/admin/*` (Kelola User, Sinkron Data) hanya admin. Ada test yang menelusuri SEMUA route dan gagal kalau ada yang lolos tanpa login (`cmd/server/router_test.go`). Semua respons `/api` ber-`Cache-Control: no-store`.
+- **Endpoint:** `POST /api/auth/login|logout|password`, `GET /api/me`, `POST /api/admin/users/{email}/password`. `POST /api/admin/users` menerima `password` opsional. Admin tidak bisa menghapus akunnya sendiri (aturan lama fn_admin_remove_user, akhirnya bisa dipasang karena sudah ada sesi).
+- **UI:** `/login` (tanpa sidebar), `/account` (ganti password sendiri), guard `authGuard/adminGuard/guestGuard`, interceptor 401 → kembali ke login dengan pemberitahuan "sesi berakhir", `returnUrl` hanya path internal (anti open-redirect), menu admin disembunyikan untuk non-admin. Layout dipisah: `App` (tema) → `layout/Shell` (topbar+sidebar) → halaman.
+- **Password admin pertama** (tidak ada UI untuk itu, sengaja): `server user set-password --email=EMAIL --admin` (prompt tersembunyi, atau dikirim lewat stdin; TIDAK lewat flag supaya tidak masuk shell history). Di server: `docker compose exec api /app/server user set-password --email=EMAIL --admin`. Membuat user kalau belum ada.
+- **Gotcha produksi:** `COOKIE_SECURE` default true di production → kalau app dilayani lewat HTTP polos, browser membuang cookie dan login berulang. Set `COOKIE_SECURE=false` hanya bila memang tanpa TLS.
+- Belum ada: "lupa password" mandiri (reset lewat admin), 2FA, dan pembatas yang dibagi antar-instance (in-memory).
+
 ### Testing
 - **Go**: 70+ test (`model`+`service`+`etl`), semua pakai database ephemeral per-test (`api/internal/testutil/db.go`) — jalan konkuren tanpa race. `TEST_DATABASE_URL` harus di-set buat test yang butuh DB asli, kalau tidak di-set otomatis skip.
-- **Angular**: 28 test (Vitest, headless via jsdom default) — app shell + formatter.
+- **Angular**: 54 test (Vitest, headless via jsdom default) — app shell + formatter.
 - `go test ./...` dan `npm test` sama-sama harus lulus sebelum push (`make check` belum pernah dijalankan penuh di mesin ini karena beberapa sub-step butuh Docker yang kadang lambat — tapi semua komponennya sudah diverifikasi manual satu-satu).
 
 ### Bug nyata yang ketemu & diperbaiki selama development (referensi kalau ada yang mirip muncul lagi)

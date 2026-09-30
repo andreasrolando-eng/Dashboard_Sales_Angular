@@ -31,14 +31,9 @@ func AddUser(db *gorm.DB, email string, isAdmin bool) (model.User, error) {
 	return u, err
 }
 
-// RemoveUser deletes a user by email (case-insensitive).
-//
-// TODO(SSO): the old fn_admin_remove_user refused to let a caller remove
-// their own access, checked against the caller's session email. There is no
-// session yet (SSO deferred) -- this function does not accept a
-// caller-supplied "actor email" as a substitute, since that would be trivial
-// to spoof. Wire the self-removal check here once operations-sso sessions
-// exist and the handler has a real caller identity.
+// RemoveUser deletes a user by email (case-insensitive); the user's sessions
+// go with it (ON DELETE CASCADE). The "you can't remove yourself" rule lives in
+// the HTTP handler, where the signed-in caller is known.
 func RemoveUser(db *gorm.DB, email string) error {
 	return db.Where("email = ?", strings.ToLower(strings.TrimSpace(email))).Delete(&model.User{}).Error
 }

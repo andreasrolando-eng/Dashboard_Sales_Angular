@@ -21,6 +21,11 @@ type Config struct {
 
 	SessionSecret string
 
+	// Local email+password sign-in: how long a login lasts, and whether the
+	// session cookie is HTTPS-only (default: true in production).
+	SessionTTLHours int
+	CookieSecure    bool
+
 	ESBAPIBaseURL       string
 	ESBAPIKey           string
 	HealthchecksPingURL string
@@ -61,6 +66,9 @@ func Load() Config {
 		OIDCRedirectURL:  getEnv("OIDC_REDIRECT_URL", ""),
 
 		SessionSecret: getEnv("SESSION_SECRET", ""),
+
+		SessionTTLHours: getEnvInt("SESSION_TTL_HOURS", 12),
+		CookieSecure:    getEnvBool("COOKIE_SECURE", appEnv == "production"),
 
 		ESBAPIBaseURL:       getEnv("ESB_API_BASE_URL", ""),
 		ESBAPIKey:           getEnv("ESB_API_KEY", ""),

@@ -47,7 +47,11 @@ export interface PromoRow {
     discount_cost: number; lift_pct: number | null; roi: number | null; status: string;
 }
 
-export interface AdminUser { id: number; email: string; name: string; is_admin: boolean; created_at: string }
+export interface AdminUser {
+    id: number; email: string; name: string; is_admin: boolean; created_at: string;
+    /** Whether the account can sign in with the form (a password is set). */
+    has_password: boolean; last_login_at: string | null;
+}
 
 // ---- Manual sync (/api/admin/sync) ----
 export interface RowCounts { outlets: number; sales: number; payments: number; items: number }

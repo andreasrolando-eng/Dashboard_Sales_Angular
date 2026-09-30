@@ -1,0 +1,5 @@
+.sr-only { position: absolute; inline-size: 1px; block-size: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.self-badge { margin-inline-start: 0.4rem; }
+.tbl td .btn + .btn { margin-inline-start: 0.25rem; }
+.btn-ghost { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+.muted { color: var(--app-faint); font-size: 0.78rem; }

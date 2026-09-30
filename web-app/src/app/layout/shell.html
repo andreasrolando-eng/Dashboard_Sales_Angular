@@ -1,0 +1,46 @@
+<div class="shell" [class.collapsed]="!expanded()" [class.drawer-open]="drawerOpen()">
+    <header class="topbar">
+        <button type="button" class="icon-btn" (click)="toggleMenu()" aria-label="Buka/tutup menu">
+            <tui-icon icon="@tui.menu" />
+        </button>
+        <a class="brand" routerLink="/" (click)="closeDrawer()">
+            <img class="brand-logo" src="icon.png" alt="" width="32" height="32" />
+            <span class="brand-name">Dashboard Sales</span>
+        </a>
+        <span class="spacer"></span>
+        <button type="button" class="icon-btn" (click)="toggleTheme()" [attr.aria-label]="dark() ? 'Mode terang' : 'Mode gelap'">
+            <tui-icon [icon]="dark() ? '@tui.sun' : '@tui.moon'" />
+        </button>
+        <a class="user" routerLink="/account" [title]="'Akun: ' + auth.displayName()" (click)="closeDrawer()">
+            <span class="avatar">{{ initial() }}</span>
+            <span class="user-mail">{{ auth.displayName() }}</span>
+        </a>
+        <button type="button" class="icon-btn" title="Keluar" aria-label="Keluar" (click)="logout()">
+            <tui-icon icon="@tui.log-out" />
+        </button>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigasi utama">
+        <p class="side-title">Menu</p>
+        <nav>
+            @for (item of navItems(); track item.path) {
+                <a
+                    class="side-link"
+                    [routerLink]="item.path"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                    [title]="item.label"
+                    (click)="closeDrawer()"
+                >
+                    <tui-icon [icon]="item.icon" />
+                    <span class="side-label">{{ item.label }}</span>
+                </a>
+            }
+        </nav>
+    </aside>
+    <div class="scrim" (click)="closeDrawer()"></div>
+
+    <main class="content">
+        <router-outlet />
+    </main>
+</div>
