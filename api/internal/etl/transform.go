@@ -85,6 +85,22 @@ type TransformResult struct {
 //     provides no other reliable per-line key.
 //   - one syncedAt timestamp is shared by every row in this call (one value
 //     per sync-esb invocation for one day, not per record).
+//
+// NonSalesPaymentTypeID is the ESB paymentMethodTypeID of "non sales"
+// payments. ESB does not allow it to be combined with other payment types on
+// one bill, so any bill carrying it is a non sales bill as a whole.
+const NonSalesPaymentTypeID = "7"
+
+// isNonSales reports whether a record is paid with the non sales payment type.
+func isNonSales(r esbSaleRecord) bool {
+	for _, p := range r.SalesPayments {
+		if p.PaymentMethodTypeID != nil && strings.TrimSpace(*p.PaymentMethodTypeID) == NonSalesPaymentTypeID {
+			return true
+		}
+	}
+	return false
+}
+
 func Transform(records []esbSaleRecord, syncedAt time.Time) TransformResult {
 	outletsByCode := map[string]model.Outlet{}
 	outletOrder := []string{}
@@ -158,6 +174,7 @@ func Transform(records []esbSaleRecord, syncedAt time.Time) TransformResult {
 			FlagInclusive:     orNull(r.FlagInclusive),
 			StatusID:          orNull(r.StatusID),
 			StatusName:        orNull(r.StatusName),
+			IsNonSales:        isNonSales(r),
 			FullName:          orNull(r.FullName),
 			Email:             orNull(r.Email),
 			PhoneNumber:       orNull(r.PhoneNumber),

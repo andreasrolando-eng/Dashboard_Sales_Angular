@@ -46,19 +46,22 @@ type RawSale struct {
 	FlagInclusive        *string
 	StatusID             *string
 	StatusName           *string
-	FullName             *string
-	Email                *string
-	PhoneNumber          *string
-	CreatedBy            *string
-	EditedBy             *string
-	EditedDate           *time.Time
-	ParentLinkSalesNum   *string
-	ChildLinkSalesNum    []byte `gorm:"type:jsonb"`
-	MergeTable           []byte `gorm:"type:jsonb"`
-	Raw                  []byte `gorm:"type:jsonb;not null"`
-	SyncedAt             time.Time
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+	// IsNonSales: paid with payment method type 7 (see etl.NonSalesPaymentTypeID).
+	// Such bills are excluded from every sales metric.
+	IsNonSales         bool `gorm:"not null;default:false"`
+	FullName           *string
+	Email              *string
+	PhoneNumber        *string
+	CreatedBy          *string
+	EditedBy           *string
+	EditedDate         *time.Time
+	ParentLinkSalesNum *string
+	ChildLinkSalesNum  []byte `gorm:"type:jsonb"`
+	MergeTable         []byte `gorm:"type:jsonb"`
+	Raw                []byte `gorm:"type:jsonb;not null"`
+	SyncedAt           time.Time
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 // RawSalesPayment is one payment line for a RawSale (a bill can be split

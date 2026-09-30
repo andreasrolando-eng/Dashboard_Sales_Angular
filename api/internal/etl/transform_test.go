@@ -173,3 +173,33 @@ func TestFlexNumber_AcceptsStringOrNumber(t *testing.T) {
 }
 
 func f(v float64) *float64 { return &v }
+
+// Uses the real ESB JSON shape so the test also covers decoding of
+// paymentMethodTypeID.
+func TestTransform_FlagsNonSalesBillsByPaymentType7(t *testing.T) {
+	var recs []esbSaleRecord
+	raw := `[
+		{"salesNum":"SN-CASH","salesDate":"2026-02-03","branchCode":"BR01","grandTotal":100,
+		 "salesPayments":[{"salesPaymentBackendID":"1","paymentMethodTypeID":"1","paymentMethodTypeName":"CASH"}]},
+		{"salesNum":"SN-NS","salesDate":"2026-02-03","branchCode":"BR01","grandTotal":40,
+		 "salesPayments":[{"salesPaymentBackendID":"2","paymentMethodTypeID":"7","paymentMethodTypeName":"COMPLIMENT"}]},
+		{"salesNum":"SN-NS-SPACE","salesDate":"2026-02-03","branchCode":"BR01","grandTotal":40,
+		 "salesPayments":[{"salesPaymentBackendID":"3","paymentMethodTypeID":" 7 "}]},
+		{"salesNum":"SN-17","salesDate":"2026-02-03","branchCode":"BR01","grandTotal":40,
+		 "salesPayments":[{"salesPaymentBackendID":"4","paymentMethodTypeID":"17"}]},
+		{"salesNum":"SN-NOPAY","salesDate":"2026-02-03","branchCode":"BR01","grandTotal":0}
+	]`
+	if err := json.Unmarshal([]byte(raw), &recs); err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]bool{}
+	for _, s := range Transform(recs, time.Now()).Sales {
+		got[s.SalesNum] = s.IsNonSales
+	}
+	want := map[string]bool{"SN-CASH": false, "SN-NS": true, "SN-NS-SPACE": true, "SN-17": false, "SN-NOPAY": false}
+	for num, w := range want {
+		if got[num] != w {
+			t.Errorf("%s: IsNonSales = %v, want %v", num, got[num], w)
+		}
+	}
+}

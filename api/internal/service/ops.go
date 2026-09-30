@@ -71,7 +71,8 @@ func GetOpsSummary(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) (O
 			coalesce(sum(promotion_discount) filter (where status_name = 'Finished'), 0) as promotion_discount_sum,
 			coalesce(sum(voucher_discount_total) filter (where status_name = 'Finished'), 0) as voucher_discount_sum
 		from raw_sales
-		where sales_date between ? and ?
+		where not is_non_sales
+			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 	`, dateStart, dateEnd, outlet, outlet).Scan(&result.Totals).Error
 	if err != nil {
@@ -90,7 +91,7 @@ func GetOpsSummary(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) (O
 			coalesce(sum(grand_total), 0) as revenue,
 			coalesce(count(*), 0) as trans_count
 		from raw_sales
-		where status_name = 'Finished'
+		where status_name = 'Finished' and not is_non_sales
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 		group by channel
@@ -107,7 +108,7 @@ func GetOpsSummary(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) (O
 			coalesce(count(*), 0) as payment_count
 		from raw_sales_payments p
 		join raw_sales s on s.sales_num = p.sales_num
-		where s.status_name = 'Finished'
+		where s.status_name = 'Finished' and not s.is_non_sales
 			and s.sales_date between ? and ?
 			and (?::text is null or s.branch_code = ?)
 		group by p.payment_method_type_name

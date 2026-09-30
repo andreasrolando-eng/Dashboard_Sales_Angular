@@ -16,6 +16,7 @@ export const routes: Routes = [
             { path: 'ops', loadComponent: () => import('./features/ops/ops').then((m) => m.Ops) },
             { path: 'membership', loadComponent: () => import('./features/membership/membership').then((m) => m.Membership) },
             { path: 'marketing', loadComponent: () => import('./features/marketing/marketing').then((m) => m.Marketing) },
+            { path: 'non-sales', loadComponent: () => import('./features/non-sales/non-sales').then((m) => m.NonSales) },
             { path: 'account', loadComponent: () => import('./features/account/account').then((m) => m.Account) },
             {
                 path: 'admin',

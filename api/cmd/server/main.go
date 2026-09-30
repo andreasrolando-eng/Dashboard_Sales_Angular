@@ -176,6 +176,13 @@ func newRouter(cfg config.Config, gormDB *gorm.DB, manualSyncer *etl.ManualSynce
 				r.Get("/members/{memberCode}/menu-purchases", handler.MemberMenuPurchases(gormDB))
 				r.Get("/new-weekly", handler.MembershipNewWeekly(gormDB))
 			})
+			r.Route("/non-sales", func(r chi.Router) {
+				r.Get("/summary", handler.NonSalesSummary(gormDB))
+				r.Get("/daily", handler.NonSalesDaily(gormDB))
+				r.Get("/by-outlet", handler.NonSalesByOutlet(gormDB))
+				r.Get("/top-menus", handler.NonSalesTopMenus(gormDB))
+				r.Get("/bills", handler.NonSalesBills(gormDB))
+			})
 			r.Route("/marketing", func(r chi.Router) {
 				r.Get("/promo-performance", handler.PromoPerformance(gormDB))
 			})

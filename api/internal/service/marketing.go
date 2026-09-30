@@ -39,7 +39,7 @@ func GetPromoPerformance(db *gorm.DB, dateStart, dateEnd time.Time, outlet *stri
 				coalesce(sum(grand_total) filter (where promotion_id is null or promotion_id = '0'), 0) as revenue,
 				coalesce(count(*) filter (where promotion_id is null or promotion_id = '0'), 0) as trans_count
 			from raw_sales
-			where status_name = 'Finished'
+			where status_name = 'Finished' and not is_non_sales
 				and sales_date between ? and ?
 				and (?::text is null or branch_code = ?)
 		),
@@ -54,7 +54,7 @@ func GetPromoPerformance(db *gorm.DB, dateStart, dateEnd time.Time, outlet *stri
 				sum(grand_total) as promo_revenue,
 				sum(discount_total) as discount_cost
 			from raw_sales
-			where status_name = 'Finished'
+			where status_name = 'Finished' and not is_non_sales
 				and promotion_id is not null and promotion_id <> '0'
 				and sales_date between ? and ?
 				and (?::text is null or branch_code = ?)

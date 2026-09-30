@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
     { label: 'Ops', path: '/ops', icon: '@tui.clock' },
     { label: 'Membership', path: '/membership', icon: '@tui.users' },
     { label: 'Marketing', path: '/marketing', icon: '@tui.megaphone' },
+    { label: 'Non Sales', path: '/non-sales', icon: '@tui.hand-coins' },
     { label: 'Kelola User', path: '/admin/users', icon: '@tui.user-cog', adminOnly: true },
     { label: 'Sinkron Data', path: '/admin/sync', icon: '@tui.refresh-cw', adminOnly: true },
 ];

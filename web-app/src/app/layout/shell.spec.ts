@@ -32,12 +32,12 @@ describe('Shell', () => {
 
     it('shows every nav item to an admin', async () => {
         const { el } = await setup(admin);
-        expect(labels(el)).toEqual(['Overview', 'Sales', 'Ops', 'Membership', 'Marketing', 'Kelola User', 'Sinkron Data']);
+        expect(labels(el)).toEqual(['Overview', 'Sales', 'Ops', 'Membership', 'Marketing', 'Non Sales', 'Kelola User', 'Sinkron Data']);
     });
 
     it('hides the admin-only pages from a regular user', async () => {
         const { el } = await setup(viewer);
-        expect(labels(el)).toEqual(['Overview', 'Sales', 'Ops', 'Membership', 'Marketing']);
+        expect(labels(el)).toEqual(['Overview', 'Sales', 'Ops', 'Membership', 'Marketing', 'Non Sales']);
     });
 
     it('logs out through the API and returns to the login form', async () => {

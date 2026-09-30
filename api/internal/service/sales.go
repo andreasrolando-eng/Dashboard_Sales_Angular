@@ -30,7 +30,8 @@ func GetSalesSummary(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) 
 			coalesce(count(*) filter (where status_name = 'Finished'), 0) as trans_count,
 			coalesce(sum(grand_total) filter (where status_name = 'Finished' and member_code is not null), 0) as member_revenue
 		from raw_sales
-		where sales_date between ? and ?
+		where not is_non_sales
+			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 	`, dateStart, dateEnd, outlet, outlet).Scan(&s).Error
 	return s, err
@@ -63,7 +64,8 @@ func GetSalesDaily(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) ([
 			coalesce(count(*) filter (where status_name = 'Finished' and (promotion_id is null or promotion_id = '0')), 0) as non_promo_trans_count,
 			coalesce(sum(`+nettSalesExpr+`) filter (where status_name = 'Finished'), 0) as nett_sales
 		from raw_sales
-		where sales_date between ? and ?
+		where not is_non_sales
+			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 		group by sales_date, branch_code
 		order by sales_date, branch_code
@@ -90,7 +92,8 @@ func GetSalesHourly(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string) (
 			coalesce(sum(grand_total) filter (where status_name = 'Finished'), 0) as revenue,
 			coalesce(count(*) filter (where status_name = 'Finished'), 0) as trans_count
 		from raw_sales
-		where sales_date_in is not null
+		where not is_non_sales
+			and sales_date_in is not null
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 		group by extract(hour from sales_date_in)::int
@@ -128,7 +131,8 @@ func GetRevenueByOutlet(db *gorm.DB, dateStart, dateEnd time.Time) ([]OutletReve
 				sum(`+nettSalesExpr+`) filter (where status_name = 'Finished') as nett_sales,
 				count(*) filter (where status_name = 'Finished') as trans_count
 			from raw_sales
-			where sales_date between ? and ?
+			where not is_non_sales
+				and sales_date between ? and ?
 			group by branch_code
 		) v on v.branch_code = o.branch_code
 		group by o.branch_code, o.branch_name
@@ -151,7 +155,7 @@ func GetRevenueByCategory(db *gorm.DB, dateStart, dateEnd time.Time, outlet, cat
 		with tx_nett as (
 			select sales_num, `+nettSalesExpr+` as nett_sales
 			from raw_sales
-			where status_name = 'Finished'
+			where status_name = 'Finished' and not is_non_sales
 				and sales_date between ? and ?
 				and (?::text is null or branch_code = ?)
 		),
@@ -207,7 +211,7 @@ func GetTopProducts(db *gorm.DB, dateStart, dateEnd time.Time, outlet, category,
 			coalesce(sum(qty), 0) as qty,
 			coalesce(sum(total), 0) as revenue
 		from raw_sales_menu_items m
-		where sales_num in (select sales_num from raw_sales where status_name = 'Finished')
+		where sales_num in (select sales_num from raw_sales where status_name = 'Finished' and not is_non_sales)
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 			and (?::text is null or menu_category_id = ?)
@@ -267,7 +271,7 @@ func GetMenuPerformance(db *gorm.DB, dateStart, dateEnd time.Time, outlet, categ
 				m.qty, m.total as revenue
 			from raw_sales_menu_items m
 			join raw_sales s on s.sales_num = m.sales_num
-			where s.status_name = 'Finished'
+			where s.status_name = 'Finished' and not s.is_non_sales
 		),
 		current_agg as (
 			select
@@ -334,7 +338,7 @@ func GetSalesBills(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string, pa
 	var total int64
 	err := db.Raw(`
 		select count(*) from raw_sales
-		where status_name = 'Finished'
+		where status_name = 'Finished' and not is_non_sales
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 	`, dateStart, dateEnd, outlet, outlet).Scan(&total).Error
@@ -346,7 +350,7 @@ func GetSalesBills(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string, pa
 	err = db.Raw(`
 		select bill_num, sales_date, branch_code, grand_total
 		from raw_sales
-		where status_name = 'Finished'
+		where status_name = 'Finished' and not is_non_sales
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 		order by sales_date asc, bill_num asc
@@ -363,7 +367,7 @@ func GetAllSalesBills(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string)
 	err := db.Raw(`
 		select bill_num, sales_date, branch_code, grand_total
 		from raw_sales
-		where status_name = 'Finished'
+		where status_name = 'Finished' and not is_non_sales
 			and sales_date between ? and ?
 			and (?::text is null or branch_code = ?)
 		order by sales_date asc, bill_num asc

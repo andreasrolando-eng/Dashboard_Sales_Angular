@@ -20,7 +20,7 @@ const membersDimCTE = `
 member_visits_daily as (
 	select sales_date, member_code, branch_code, count(*) as visit_count, sum(grand_total) as spending
 	from raw_sales
-	where status_name = 'Finished' and member_code is not null
+	where status_name = 'Finished' and not is_non_sales and member_code is not null
 	group by sales_date, member_code, branch_code
 ),
 member_branch_counts as (
@@ -189,7 +189,7 @@ func GetTopMembers(db *gorm.DB, dateStart, dateEnd time.Time, outlet *string, li
 			select s.member_code, m.sales_date, m.branch_code, m.menu_id, m.menu_name, sum(m.qty) as qty
 			from raw_sales_menu_items m
 			join raw_sales s on s.sales_num = m.sales_num
-			where s.status_name = 'Finished' and s.member_code is not null
+			where s.status_name = 'Finished' and not s.is_non_sales and s.member_code is not null
 			group by s.member_code, m.sales_date, m.branch_code, m.menu_id, m.menu_name
 		),
 		menu_agg as (
@@ -258,7 +258,7 @@ func GetMemberMenuPurchases(db *gorm.DB, memberCode string, dateStart, dateEnd t
 			select s.member_code, m.sales_date, m.branch_code, m.menu_id, m.menu_name, m.qty, m.total as revenue
 			from raw_sales_menu_items m
 			join raw_sales s on s.sales_num = m.sales_num
-			where s.status_name = 'Finished' and s.member_code is not null
+			where s.status_name = 'Finished' and not s.is_non_sales and s.member_code is not null
 		)
 		select menu_id, menu_name, sum(qty) as qty, sum(revenue) as revenue, max(sales_date) as last_purchase_date
 		from member_menu_daily

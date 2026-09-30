@@ -79,3 +79,14 @@ export interface SyncLog {
     id: number; job_name: string; target_date: string | null; started_at: string; finished_at: string | null;
     status: string; rows_synced: number | null; error_message: string | null;
 }
+
+// ---- Non sales (/api/non-sales): bills paid with payment method type 7 ----
+export interface NonSalesSummary { value: number; trans_count: number; avg_value: number; outlet_count: number }
+export interface NonSalesDaily { sales_date: string; value: number; trans_count: number }
+export interface NonSalesOutlet { branch_code: string; branch_name: string; value: number; trans_count: number }
+export interface NonSalesMenu { menu_id: string; menu_name: string | null; category: string | null; qty: number; value: number }
+export interface NonSalesBill {
+    bill_num: string | null; sales_date: string; branch_code: string; grand_total: number;
+    payment_method: string | null; member_name: string | null;
+}
+export interface NonSalesBillsPage { rows: NonSalesBill[]; total_count: number }

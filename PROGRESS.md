@@ -128,3 +128,10 @@ M4 ditunda (keputusan user: dikerjakan terakhir; butuh source `mcp-server/` dari
 
 ## Sinkron manual jadi satu mode (2026-09-30)
 Permintaan user: UI **Sinkron Data** tidak lagi memilih "lengkapi/perbarui". Satu tombol = mode `refresh` (upsert): bill yang belum ada ditambahkan, yang sudah ada ditimpa data ESB terbaru, perubahan status dilaporkan, tanpa duplikat. `POST /api/admin/sync` tanpa `mode` kini default `refresh`; `mode: "fill"` (insert-only) masih diterima API untuk pemanggil lain. Riwayat menampilkan keduanya sebagai "Manual".
+
+## Segmen Non Sales (2026-09-30)
+Definisi (keputusan user): bill = **non sales** bila dibayar dengan `paymentMethodTypeID = 7`. ESB tidak mengizinkan tipe 7 digabung tipe lain, jadi seluruh bill non sales.
+- Kolom `raw_sales.is_non_sales` (migration `20260930150001_non_sales`, mengisi data lama dari `raw_sales_payments`), diisi ETL di `etl.Transform` (`etl.NonSalesPaymentTypeID`). Sinkron manual/harian (upsert) ikut memperbaruinya.
+- **Dikeluarkan dari semua angka sales:** Overview, Sales (summary, harian, per jam, per outlet, kategori, top produk, performa menu, bill, export), Ops (termasuk hitungan batal/void dan metode bayar), Membership (kunjungan, spending, riwayat menu), Marketing (redemption + baseline). Daftar kategori menu (meta) tidak diubah.
+- **Menu baru Non Sales** (`/non-sales`, semua user login): KPI nilai/transaksi/rata-rata/outlet, harian, per outlet, menu terbanyak, daftar bill + metode bayar. API `GET /api/non-sales/{summary,daily,by-outlet,top-menus,bills}`.
+- Data staging belum punya pembayaran tipe 7; diuji dengan simulasi satu bill di DB dev (revenue sales turun tepat sebesar bill itu, bill muncul di Non Sales), lalu dikembalikan.
