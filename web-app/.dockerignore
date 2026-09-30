@@ -1,0 +1,18 @@
+# Jangan kirim ke konteks build Docker. node_modules WAJIB dikecualikan: image
+# menjalankan `npm ci` sendiri (Linux); node_modules dari host (mis. Windows)
+# yang tertimpa lewat `COPY . .` bisa merusak build (binary native beda OS).
+node_modules
+dist
+.angular
+.git
+.gitignore
+.vscode
+.idea
+*.log
+npm-debug.log*
+coverage
+tmp
+.env
+.env.*
+Dockerfile
+.dockerignore

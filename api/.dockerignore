@@ -1,0 +1,14 @@
+# Jangan kirim ke konteks build Docker (rahasia + artefak lokal).
+.git
+.gitignore
+.vscode
+.idea
+.env
+.env.*
+*.exe
+*.test
+*.out
+*.log
+tmp
+Dockerfile
+.dockerignore
