@@ -7,7 +7,7 @@ import { Component, computed, input } from '@angular/core';
     template: `
         <div class="kpi">
             <span class="kpi-label">{{ label() }}</span>
-            <strong class="kpi-value">{{ loading() ? '…' : value() }}</strong>
+            <strong class="kpi-value" [title]="loading() ? '' : value()">{{ loading() ? '…' : value() }}</strong>
             @if (hint()) {
                 <span class="kpi-hint">{{ hint() }}</span>
             }

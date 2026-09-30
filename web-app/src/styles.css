@@ -124,7 +124,7 @@
 .notice { margin: 0; padding: 0.65rem 0.9rem; border-radius: 9px; background: var(--app-primary-soft); color: var(--app-primary-ink); }
 
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 27rem), 1fr)); gap: 1.1rem; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr)); gap: 1.1rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr)); gap: 1.1rem; }
 app-kpi, app-panel, app-hbars { display: block; min-inline-size: 0; }
 app-columns { display: flex; flex: 1 1 auto; min-inline-size: 0; }
 app-kpi > .kpi, app-panel > .card { block-size: 100%; }
@@ -139,11 +139,14 @@ app-kpi > .kpi, app-panel > .card { block-size: 100%; }
 .sync-note { margin-inline-start: auto; font-size: 0.75rem; color: var(--app-faint); }
 
 /* ---------- KPI ---------- */
-.kpi { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.75rem; padding: 1.1rem 1.25rem; align-items: start; align-content: start; }
-.kpi-label { font-size: 0.8rem; font-weight: 500; color: var(--app-muted); }
-.kpi-value { grid-column: 1; font-size: 1.4rem; white-space: nowrap; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-.kpi-hint { grid-column: 1; font-size: 0.75rem; color: var(--app-faint); }
-.kpi-icon { grid-column: 2; grid-row: 1 / span 2; display: grid; place-items: center; inline-size: 2.6rem; block-size: 2.6rem;
+/* Label + icon share the top row; the value gets its own full-width row and
+   scales with the card width (container query units), so long amounts such as
+   "Rp 1.234.567.890" never run into the icon. */
+.kpi { container-type: inline-size; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem 0.75rem; padding: 1.1rem 1.25rem; align-items: center; align-content: start; }
+.kpi-label { grid-column: 1; grid-row: 1; min-inline-size: 0; font-size: 0.8rem; font-weight: 500; color: var(--app-muted); }
+.kpi-value { grid-column: 1 / -1; grid-row: 2; min-inline-size: 0; font-size: clamp(1rem, 10cqi, 1.5rem); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.kpi-hint { grid-column: 1 / -1; grid-row: 3; font-size: 0.75rem; color: var(--app-faint); }
+.kpi-icon { grid-column: 2; grid-row: 1; display: grid; place-items: center; inline-size: 2.6rem; block-size: 2.6rem;
     border-radius: 10px; font-size: 1.25rem; background: var(--app-primary-soft); color: var(--app-primary-ink); }
 
 /* ---------- Charts ---------- */
