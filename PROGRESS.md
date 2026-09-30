@@ -122,3 +122,6 @@ Email + password, dibuat atas permintaan user karena SSO ditunda. **Catatan:** s
 ## Next step yang disarankan
 
 M4 ditunda (keputusan user: dikerjakan terakhir; butuh source `mcp-server/` dari repo lama `andreasrolando-eng/Dashboard-Sales`). Sisa: M6 (deploy — butuh repo di org Operations-ESB dulu), lalu M4. SSO juga masih ditunda.
+
+## Deploy demo Railway (2026-09-30)
+`Dockerfile` + `.dockerignore` + `railway.json` di root: satu container (Angular disajikan oleh API Go lewat `STATIC_DIR`, `handler.SPA`), migration otomatis saat start, membaca `$PORT`. Pool koneksi DB diatur untuk Postgres terkelola (idle 2 menit). Diuji lokal dengan Postgres kosong + `PORT=7777`: migration, SPA/deep link, cache bundle, 401 tanpa login, login+cookie, restart idempoten, dan alur browser. Panduan: `docs/deploy-railway.md`. Production tetap `docs/deploy-production.md`.

@@ -9,8 +9,11 @@ import (
 
 // Config holds runtime configuration loaded from environment variables.
 type Config struct {
-	AppEnv      string
-	AppPort     string
+	AppEnv  string
+	AppPort string
+	// StaticDir, when set, makes the API also serve the built Angular app
+	// (single-container deploys such as Railway). Empty = API only.
+	StaticDir   string
 	FrontendURL string
 	DatabaseURL string
 
@@ -55,8 +58,10 @@ func Load() Config {
 	appEnv := getEnv("APP_ENV", "development")
 
 	return Config{
-		AppEnv:      appEnv,
-		AppPort:     getEnv("APP_PORT", "8080"),
+		AppEnv: appEnv,
+		// PORT is what PaaS hosts (Railway, Render) inject; APP_PORT is ours.
+		AppPort:     getEnv("PORT", getEnv("APP_PORT", "8080")),
+		StaticDir:   getEnv("STATIC_DIR", ""),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:4200"),
 		DatabaseURL: getEnv("DATABASE_URL", ""),
 

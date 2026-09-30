@@ -1,0 +1,15 @@
+# Context for the root (single-container) Dockerfile.
+.git
+.github
+.githooks
+.env
+.env.*
+!.env.example
+docs
+backups
+**/node_modules
+web-app/dist
+web-app/.angular
+api/*.exe
+api/*.test
+*.log

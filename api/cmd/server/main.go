@@ -188,6 +188,11 @@ func newRouter(cfg config.Config, gormDB *gorm.DB, manualSyncer *etl.ManualSynce
 		})
 	})
 
+	// Single-container deploy: everything that is not /api or /healthz is the
+	// Angular app (same origin, so the session cookie just works).
+	if cfg.StaticDir != "" {
+		r.Handle("/*", handler.SPA(cfg.StaticDir))
+	}
 	return r
 }
 
