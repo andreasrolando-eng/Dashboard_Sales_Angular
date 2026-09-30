@@ -17,8 +17,8 @@ const STATUS_BADGE: Record<SyncStatus, string> = { pending: '', running: 'badge-
 
 const LOG_KIND: Record<string, string> = {
     'sync-esb': 'Harian',
-    'sync-esb-manual': 'Manual · lengkapi',
-    'sync-esb-manual-refresh': 'Manual · perbarui',
+    'sync-esb-manual': 'Manual',
+    'sync-esb-manual-refresh': 'Manual',
 };
 
 interface DatedChange extends StatusChange { date: string }
@@ -37,23 +37,6 @@ interface DatedRef extends BillRef { date: string }
             <section class="card">
                 <header class="card-head"><h3>Tarik data manual</h3></header>
 
-                <fieldset class="mode-group" [disabled]="running()">
-                    <legend>Mode sinkron</legend>
-                    <label class="mode-opt" [class.selected]="mode() === 'fill'">
-                        <input type="radio" name="sync-mode" value="fill" [checked]="mode() === 'fill'" (change)="mode.set('fill')" />
-                        <span>
-                            <strong>Lengkapi data yang belum ada</strong>
-                            <small>Hanya menambahkan yang belum tersimpan. Data yang sudah ada tidak diubah.</small>
-                        </span>
-                    </label>
-                    <label class="mode-opt" [class.selected]="mode() === 'refresh'">
-                        <input type="radio" name="sync-mode" value="refresh" [checked]="mode() === 'refresh'" (change)="mode.set('refresh')" />
-                        <span>
-                            <strong>Perbarui data yang sudah ada</strong>
-                            <small>Ganti dengan data terbaru dari ESB. Pakai ini jika ada transaksi yang di-void atau diubah setelah tersimpan.</small>
-                        </span>
-                    </label>
-                </fieldset>
 
                 <div class="form-row">
                     <div class="field">
@@ -61,22 +44,18 @@ interface DatedRef extends BillRef { date: string }
                         <app-date-range [(start)]="start" [(end)]="end" />
                     </div>
                     <button type="button" class="btn" [disabled]="!canStart()" (click)="startSync()">
-                        {{ running() ? 'Sedang berjalan…' : starting() ? 'Memulai…' : mode() === 'refresh' ? 'Mulai perbarui' : 'Mulai sinkron' }}
+                        {{ running() ? 'Sedang berjalan…' : starting() ? 'Memulai…' : 'Mulai sinkron' }}
                     </button>
                 </div>
                 <ul class="hint-list">
-                    @if (mode() === 'fill') {
-                        <li>
-                            <strong>Hanya melengkapi:</strong> bill, pembayaran, dan item yang sudah tersimpan tidak diubah dan tidak digandakan —
-                            yang ditambahkan hanya yang belum ada.
-                        </li>
-                    } @else {
-                        <li>
-                            <strong>Memperbarui:</strong> bill yang sudah tersimpan ditimpa dengan data ESB saat ini (tetap tidak ada yang digandakan).
-                            Pilih <em>tanggal transaksi</em> aslinya — bill yang di-void hari ini tetap berada di tanggal kejadiannya.
-                        </li>
-                        <li>Bill yang statusnya berubah (mis. Finished → Void) ditampilkan di bawah, dan langsung keluar dari perhitungan revenue.</li>
-                    }
+                    <li>
+                        <strong>Melengkapi sekaligus memperbarui:</strong> bill yang belum ada ditambahkan, dan bill yang sudah tersimpan
+                        diganti dengan data terbaru ESB (mis. transaksi yang di-void atau diubah). Tidak ada data yang digandakan.
+                    </li>
+                    <li>
+                        Pilih <em>tanggal transaksi</em> aslinya — bill yang di-void hari ini tetap berada di tanggal kejadiannya.
+                        Bill yang statusnya berubah (mis. Finished → Void) ditampilkan di bawah dan langsung keluar dari perhitungan revenue.
+                    </li>
                     <li>{{ rangeHint() }}</li>
                     <li>Sinkron otomatis harian (06:00 WIB) tetap berjalan seperti biasa dan tidak terpengaruh.</li>
                 </ul>
@@ -228,7 +207,6 @@ export class AdminSync {
     protected readonly longDate = longDate;
     protected readonly wibTime = wibTime;
 
-    protected readonly mode = signal<SyncMode>('fill');
     protected readonly start = signal(wibDate(1));
     protected readonly end = signal(wibDate(1));
     protected readonly starting = signal(false);
@@ -297,7 +275,7 @@ export class AdminSync {
 
         this.error.set('');
         this.starting.set(true);
-        this.http.post<ManualJob>('/api/admin/sync', { date_from: this.start(), date_to: this.end(), mode: this.mode() }).subscribe({
+        this.http.post<ManualJob>('/api/admin/sync', { date_from: this.start(), date_to: this.end(), mode: 'refresh' }).subscribe({
             next: () => {
                 this.starting.set(false);
                 this.job.reload();

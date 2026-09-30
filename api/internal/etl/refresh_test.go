@@ -144,7 +144,7 @@ func TestManualRefresh_CountsNewBillsAndFlagsBillsESBNoLongerReturns(t *testing.
 }
 
 func TestParseManualMode(t *testing.T) {
-	for in, want := range map[string]etl.ManualMode{"": etl.ManualFill, "fill": etl.ManualFill, "refresh": etl.ManualRefresh} {
+	for in, want := range map[string]etl.ManualMode{"": etl.ManualRefresh, "fill": etl.ManualFill, "refresh": etl.ManualRefresh} {
 		if got, err := etl.ParseManualMode(in); err != nil || got != want {
 			t.Errorf("ParseManualMode(%q) = %q, %v; want %q", in, got, err, want)
 		}

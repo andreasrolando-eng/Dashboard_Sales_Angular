@@ -109,7 +109,7 @@ func TestStartManualSync_RunsAndReportsProgress(t *testing.T) {
 	var n int64
 	deadline = time.Now().Add(20 * time.Second)
 	for time.Now().Before(deadline) {
-		db.Model(&model.SyncLog{}).Where("job_name = ? and status = 'success'", etl.ManualJobName).Count(&n)
+		db.Model(&model.SyncLog{}).Where("job_name = ? and status = 'success'", etl.ManualRefreshJobName).Count(&n)
 		if n == 4 {
 			break
 		}

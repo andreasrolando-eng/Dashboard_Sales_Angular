@@ -125,3 +125,6 @@ M4 ditunda (keputusan user: dikerjakan terakhir; butuh source `mcp-server/` dari
 
 ## Deploy demo Railway (2026-09-30)
 `Dockerfile` + `.dockerignore` + `railway.json` di root: satu container (Angular disajikan oleh API Go lewat `STATIC_DIR`, `handler.SPA`), migration otomatis saat start, membaca `$PORT`. Pool koneksi DB diatur untuk Postgres terkelola (idle 2 menit). Diuji lokal dengan Postgres kosong + `PORT=7777`: migration, SPA/deep link, cache bundle, 401 tanpa login, login+cookie, restart idempoten, dan alur browser. Panduan: `docs/deploy-railway.md`. Production tetap `docs/deploy-production.md`.
+
+## Sinkron manual jadi satu mode (2026-09-30)
+Permintaan user: UI **Sinkron Data** tidak lagi memilih "lengkapi/perbarui". Satu tombol = mode `refresh` (upsert): bill yang belum ada ditambahkan, yang sudah ada ditimpa data ESB terbaru, perubahan status dilaporkan, tanpa duplikat. `POST /api/admin/sync` tanpa `mode` kini default `refresh`; `mode: "fill"` (insert-only) masih diterima API untuk pemanggil lain. Riwayat menampilkan keduanya sebagai "Manual".

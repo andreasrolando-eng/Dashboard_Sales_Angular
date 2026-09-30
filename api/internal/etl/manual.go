@@ -38,13 +38,15 @@ const (
 	ManualRefresh ManualMode = "refresh"
 )
 
-// ParseManualMode maps the API value to a mode; empty means ManualFill.
+// ParseManualMode maps the API value to a mode. Empty means ManualRefresh --
+// the one behaviour the UI offers: fill in missing bills AND refresh stored
+// ones. "fill" (insert-only) is kept for API/CLI callers.
 func ParseManualMode(s string) (ManualMode, error) {
 	switch ManualMode(s) {
-	case "", ManualFill:
-		return ManualFill, nil
-	case ManualRefresh:
+	case "", ManualRefresh:
 		return ManualRefresh, nil
+	case ManualFill:
+		return ManualFill, nil
 	}
 	return "", fmt.Errorf("mode tidak dikenal %q (pakai \"fill\" atau \"refresh\")", s)
 }
@@ -106,7 +108,7 @@ func ValidateManualRange(from, to time.Time, today string) error {
 // returns ErrBusy if a manual sync is already running.
 func (m *ManualSyncer) Start(from, to time.Time, mode ManualMode) (ManualJob, error) {
 	if mode == "" {
-		mode = ManualFill
+		mode = ManualRefresh
 	}
 	if err := ValidateManualRange(from, to, m.now().In(WIB).Format("2006-01-02")); err != nil {
 		return ManualJob{}, err

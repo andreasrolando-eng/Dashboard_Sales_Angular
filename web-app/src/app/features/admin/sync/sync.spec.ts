@@ -32,7 +32,7 @@ describe('AdminSync', () => {
 
     it('explains that only missing data is added and starts enabled for the default range', async () => {
         const { el } = await setup(null);
-        expect(el.textContent).toContain('Hanya melengkapi');
+        expect(el.textContent).toContain('Melengkapi sekaligus memperbarui');
         expect(el.textContent).toContain('1 hari akan disinkronkan');
         expect((el.querySelector('.form-row .btn') as HTMLButtonElement).disabled).toBe(false);
     });
@@ -43,7 +43,7 @@ describe('AdminSync', () => {
         const req = http.expectOne('/api/admin/sync');
         expect(req.request.method).toBe('POST');
         expect(Object.keys(req.request.body).sort()).toEqual(['date_from', 'date_to', 'mode']);
-        expect(req.request.body.mode).toBe('fill'); // the safe, non-overwriting mode is the default
+        expect(req.request.body.mode).toBe('refresh'); // one behaviour: fill in + refresh
         req.flush(job({ status: 'running' }), { status: 202, statusText: 'Accepted' });
         fixture.detectChanges();
         // the page re-reads job + logs after starting
@@ -99,23 +99,11 @@ describe('AdminSync', () => {
                 ],
             });
 
-        it('defaults to fill mode and posts mode "refresh" once chosen', async () => {
-            const { fixture, http, el } = await setup(null);
-            const button = () => el.querySelector('.form-row .btn') as HTMLButtonElement;
-            expect((el.querySelector('input[name=sync-mode]:checked') as HTMLInputElement).value).toBe('fill');
-            expect(button().textContent).toContain('Mulai sinkron');
-
-            (el.querySelectorAll('input[name=sync-mode]')[1] as HTMLInputElement).click();
-            fixture.detectChanges();
-            expect(button().textContent).toContain('Mulai perbarui');
-
-            button().click();
-            const req = http.expectOne((r) => r.method === 'POST');
-            expect(req.request.body.mode).toBe('refresh');
-            req.flush(refreshJob(), { status: 202, statusText: 'Accepted' });
-            fixture.detectChanges();
-            http.expectOne('/api/admin/sync').flush(refreshJob());
-            http.expectOne('/api/admin/sync/logs?limit=30').flush([]);
+        it('offers no mode choice: one button that fills in and refreshes', async () => {
+            const { el } = await setup(null);
+            expect(el.querySelector('input[name=sync-mode]')).toBeNull();
+            expect(el.querySelector('.form-row .btn')?.textContent).toContain('Mulai sinkron');
+            expect(el.textContent).toContain('Melengkapi sekaligus memperbarui');
         });
 
         it('lists the bills whose status changed, e.g. Finished -> Void', async () => {

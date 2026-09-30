@@ -285,16 +285,6 @@ app-kpi > .kpi, app-panel > .card { block-size: 100%; }
 .hint-list { margin: 0; padding-inline-start: 1.1rem; color: var(--app-muted); font-size: 0.825rem; display: flex; flex-direction: column; gap: 0.25rem; }
 .tbl .muted-cell { color: var(--app-muted); font-size: 0.8rem; }
 
-/* ---------- Sync mode chooser ---------- */
-.mode-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0.75rem; margin: 0; padding: 0; border: 0; min-inline-size: 0; }
-.mode-group legend { padding: 0; margin-block-end: 0.4rem; font-size: 0.75rem; font-weight: 500; color: var(--app-muted); grid-column: 1 / -1; float: left; inline-size: 100%; }
-.mode-opt { display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.8rem 1rem; border: 1px solid var(--app-line); border-radius: 12px; cursor: pointer; background: var(--app-card); }
-.mode-opt:hover { border-color: var(--app-faint); }
-.mode-opt.selected { border-color: var(--app-primary); background: var(--app-primary-soft); box-shadow: 0 0 0 1px var(--app-primary); }
-.mode-opt input { margin-block-start: 0.2rem; accent-color: var(--app-primary); flex: none; }
-.mode-opt strong { display: block; font-size: 0.9rem; color: var(--app-text); }
-.mode-opt small { display: block; margin-block-start: 0.15rem; font-size: 0.78rem; line-height: 1.4; color: var(--app-muted); }
-.mode-group:disabled .mode-opt { opacity: 0.6; cursor: default; }
 .arrow { margin-inline: 0.4rem; color: var(--app-faint); }
 
 /* ---------- Login ---------- */
