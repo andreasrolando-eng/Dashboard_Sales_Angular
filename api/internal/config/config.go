@@ -27,7 +27,11 @@ type Config struct {
 	// Local email+password sign-in: how long a login lasts, and whether the
 	// session cookie is HTTPS-only (default: true in production).
 	SessionTTLHours int
-	CookieSecure    bool
+	// First admin for hosts without a shell (Railway): only applied when that
+	// account has no password yet. Remove the password variable after login.
+	BootstrapAdminEmail    string
+	BootstrapAdminPassword string
+	CookieSecure           bool
 
 	ESBAPIBaseURL       string
 	ESBAPIKey           string
@@ -72,8 +76,10 @@ func Load() Config {
 
 		SessionSecret: getEnv("SESSION_SECRET", ""),
 
-		SessionTTLHours: getEnvInt("SESSION_TTL_HOURS", 12),
-		CookieSecure:    getEnvBool("COOKIE_SECURE", appEnv == "production"),
+		SessionTTLHours:        getEnvInt("SESSION_TTL_HOURS", 12),
+		BootstrapAdminEmail:    getEnv("BOOTSTRAP_ADMIN_EMAIL", ""),
+		BootstrapAdminPassword: getEnv("BOOTSTRAP_ADMIN_PASSWORD", ""),
+		CookieSecure:           getEnvBool("COOKIE_SECURE", appEnv == "production"),
 
 		ESBAPIBaseURL:       getEnv("ESB_API_BASE_URL", ""),
 		ESBAPIKey:           getEnv("ESB_API_KEY", ""),

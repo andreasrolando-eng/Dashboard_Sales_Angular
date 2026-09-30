@@ -109,3 +109,31 @@ func readPassword() (string, error) {
 	}
 	return string(first), nil
 }
+
+// bootstrapAdmin gives the first admin a password from environment variables,
+// for hosts where `server user set-password` can't be run (no shell). It never
+// overwrites an existing password, so leaving the variables set is harmless,
+// and once the admin changes their password in the app the variables stop
+// mattering. It returns what it did, for the log (never the password).
+func bootstrapAdmin(gormDB *gorm.DB, email, password string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if !strings.Contains(email, "@") || password == "" {
+		return "", errors.New("BOOTSTRAP_ADMIN_EMAIL dan BOOTSTRAP_ADMIN_PASSWORD harus diisi keduanya")
+	}
+	if err := auth.ValidatePassword(password); err != nil {
+		return "", fmt.Errorf("BOOTSTRAP_ADMIN_PASSWORD: %w", err)
+	}
+
+	var u model.User
+	err := gormDB.Where("email = ?", email).First(&u).Error
+	switch {
+	case err == nil && u.PasswordHash != nil && *u.PasswordHash != "":
+		return email + " sudah punya password, variabel diabaikan (boleh dihapus)", nil
+	case err != nil && !errors.Is(err, gorm.ErrRecordNotFound):
+		return "", err
+	}
+	if err := setPassword(gormDB, email, password, true); err != nil {
+		return "", err
+	}
+	return email + " siap login sebagai admin", nil
+}

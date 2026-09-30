@@ -67,6 +67,16 @@ func serve(cfg config.Config) {
 		log.Fatal(err)
 	}
 
+	if cfg.BootstrapAdminEmail != "" || cfg.BootstrapAdminPassword != "" {
+		msg, err := bootstrapAdmin(gormDB, cfg.BootstrapAdminEmail, cfg.BootstrapAdminPassword)
+		if err != nil {
+			// Not fatal: a typo here must not take the whole dashboard down.
+			log.Printf("bootstrap admin: %v", err)
+		} else {
+			log.Printf("bootstrap admin: %s", msg)
+		}
+	}
+
 	startSyncScheduler(cfg, gormDB)
 	manualSyncer := newManualSyncer(cfg, gormDB)
 

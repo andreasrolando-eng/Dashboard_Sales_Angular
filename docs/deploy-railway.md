@@ -48,6 +48,21 @@ File `api/Dockerfile`, `web-app/Dockerfile` dan `docker-compose*.yml` tidak beru
 
 ## Password admin pertama
 
+**Cara termudah (tanpa laptop):** tambahkan dua variabel di service aplikasi, lalu tunggu deploy ulang:
+
+| Variabel | Nilai |
+|---|---|
+| `BOOTSTRAP_ADMIN_EMAIL` | `andreas.rolando@esb.co.id` |
+| `BOOTSTRAP_ADMIN_PASSWORD` | password pilihan (min. 8 karakter) |
+
+Saat start, aplikasi memberi password itu ke akun tersebut (dibuat sebagai admin bila belum ada)
+**hanya jika akun itu belum punya password** — tidak pernah menimpa password yang sudah ada.
+Log menampilkan `bootstrap admin: … siap login sebagai admin` (atau alasan gagal, mis. password
+kurang dari 8 karakter). Setelah berhasil login, **hapus `BOOTSTRAP_ADMIN_PASSWORD`** dan ganti
+password lewat menu **Akun**. User lain ditambahkan dari **Kelola User**.
+
+**Alternatif (dari laptop):**
+
 Migration pertama otomatis membuat user `andreas.rolando@esb.co.id` (admin) **tanpa
 password**, jadi belum bisa login. Atur password dari laptop dengan menunjuk ke database online:
 
