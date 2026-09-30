@@ -31,7 +31,7 @@ Update terakhir: 2026-09-29 (M3b + M5 selesai; sidebar layout diperbaiki; M4 dit
 | **M3b** — Scheduling produksi ETL | ✅ Selesai | Scheduler in-process di `serve`: 06:00 WIB + catchup + advisory lock + webhook alert (lihat bawah) |
 | **M4** — Port 10 tools MCP ke Go | ❌ Belum | Reuse service layer M2 |
 | **M5** — Wiring UI (6 halaman) | ✅ Selesai | Overview, Sales, Ops, Membership, Marketing, Kelola User tersambung ke API asli (lihat bawah) |
-| **M6** — Deploy production | ❌ Belum | GitHub Actions/GHCR/docker compose, perlu repo di org dulu |
+| **M6** — Deploy production | 🟡 Siap serah-terima | Pipeline + panduan lengkap di `docs/deploy-production.md`, template `.env.production.example`. **Menunggu:** repo di org Operations-ESB (nama huruf kecil), server + secrets dari DevOps, kredensial ESB production |
 
 ## Yang sudah jadi (detail)
 
