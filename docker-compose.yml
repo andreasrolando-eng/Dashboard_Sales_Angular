@@ -1,0 +1,23 @@
+# Lokal: web-app (Angular) + api (Go) + postgres. Akses via http://localhost (client test-local-80)
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app_db
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  api:
+    build: ./api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/app_db?sslmode=disable
+    command: ["sh", "-c", "/app/server migrate up && /app/server serve"]
+    depends_on: [db]
+  web-app:
+    build: ./web-app
+    ports: ["80:80"]   # nginx di image web-app mem-proxy /api & /auth ke api:8080
+    depends_on: [api]
+volumes:
+  pgdata:

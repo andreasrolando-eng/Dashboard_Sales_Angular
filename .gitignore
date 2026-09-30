@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Go
+api/*.exe
+api/*.test
+
+# Node / Angular
+web-app/node_modules/
+web-app/dist/
+web-app/.angular/
+
+# Backups (production, dibuat di server, tidak pernah commit)
+backups/
+
+# OS / editor
+.DS_Store
+Thumbs.db

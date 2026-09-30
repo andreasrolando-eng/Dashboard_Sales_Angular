@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Salin ke .githooks/pre-push, lalu `make setup`.
+# Push dibatalkan bila test atau build gagal. Commit tetap cepat (tanpa cek).
+set -e
+echo "🔎 Menjalankan make check sebelum push..."
+make check || { echo "❌ make check gagal — perbaiki dulu sebelum push."; exit 1; }

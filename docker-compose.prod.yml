@@ -1,0 +1,20 @@
+# Production — diletakkan di /opt/apps/<app-slug>/ di server
+# Reverse proxy, domain, dan PUBLISH_PORT dikonfigurasi DevOps via .env server.
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    volumes: [pgdata:/var/lib/postgresql/data]
+    restart: unless-stopped
+  api:
+    image: ghcr.io/operations-esb/${APP_SLUG}-api:${IMAGE_TAG}
+    env_file: .env
+    depends_on: [db]
+    restart: unless-stopped
+  web-app:
+    image: ghcr.io/operations-esb/${APP_SLUG}-web-app:${IMAGE_TAG}
+    depends_on: [api]
+    restart: unless-stopped
+    ports: ["${PUBLISH_PORT:-8000}:80"]
+volumes:
+  pgdata:
