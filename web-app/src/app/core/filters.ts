@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { presetRange } from './dates';
 
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 
@@ -10,9 +11,11 @@ export function wibDate(daysAgo = 0): string {
 /** Global dashboard filters shared by every page (date range + outlet). */
 @Injectable({ providedIn: 'root' })
 export class Filters {
-    // Default window: the last 7 complete days (ETL syncs yesterday at 06:00 WIB).
-    readonly dateStart = signal(wibDate(7));
-    readonly dateEnd = signal(wibDate(1));
+    // Default window: this month so far, 1st through today (WIB) -- same as the
+    // "Bulan ini" preset. Today's own bills only arrive with the next 06:00 sync.
+    private readonly defaultRange = presetRange('thisMonth', wibDate(0));
+    readonly dateStart = signal(this.defaultRange.start);
+    readonly dateEnd = signal(this.defaultRange.end);
     readonly outlet = signal(''); // '' = all outlets
 
     readonly range = computed(() => ({ dateStart: this.dateStart(), dateEnd: this.dateEnd() }));
