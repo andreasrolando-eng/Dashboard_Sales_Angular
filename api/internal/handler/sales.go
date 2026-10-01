@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -162,6 +163,20 @@ func SalesBillsExport(db *gorm.DB) http.HandlerFunc {
 			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
-		writeJSON(w, http.StatusOK, rows)
+		if r.URL.Query().Get("format") != "xlsx" {
+			writeJSON(w, http.StatusOK, rows)
+			return
+		}
+		outlets, err := service.ListOutlets(db)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		names := make(map[string]string, len(outlets))
+		for _, o := range outlets {
+			names[o.BranchCode] = o.BranchName
+		}
+		filename := fmt.Sprintf("bill-sales_%s_%s.xlsx", start.Format("2006-01-02"), end.Format("2006-01-02"))
+		writeBillsXLSX(w, filename, rows, names)
 	}
 }

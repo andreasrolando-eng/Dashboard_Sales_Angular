@@ -90,3 +90,5 @@ export interface NonSalesBill {
     payment_method: string | null; member_name: string | null;
 }
 export interface NonSalesBillsPage { rows: NonSalesBill[]; total_count: number }
+export interface CategoryOption { category_id: string; category_name: string }
+export interface CategoryDetailOption { category_detail_id: string; category_detail_name: string; category_id: string }

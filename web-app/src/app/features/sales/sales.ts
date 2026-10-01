@@ -1,3 +1,4 @@
+import { TuiIcon } from '@taiga-ui/core';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { apiResource } from '../../core/api';
 import { Filters } from '../../core/filters';
@@ -5,6 +6,7 @@ import { compact, longDate, num, pct, rupiah, shortDate } from '../../core/forma
 import {
     BillsPage, HourlyRow, MenuPerformanceRow, OutletRevenueRow, SalesDailyRow, SalesSummary, TopProduct,
 } from '../../core/models';
+import { CategoryFilter } from '../../shared/category-filter';
 import { FilterBar } from '../../shared/filter-bar';
 import { ChartItem, Columns, HBars, Kpi, Panel } from '../../shared/ui';
 
@@ -12,7 +14,7 @@ const TREND_LABEL: Record<string, string> = { naik: 'Naik', turun: 'Turun', stag
 
 @Component({
     selector: 'app-sales',
-    imports: [FilterBar, Kpi, Panel, Columns, HBars],
+    imports: [TuiIcon, FilterBar, CategoryFilter, Kpi, Panel, Columns, HBars],
     template: `
         <div class="page">
             <div>
@@ -43,6 +45,7 @@ const TREND_LABEL: Record<string, string> = { naik: 'Naik', turun: 'Turun', stag
                     <app-hbars [items]="outletItems()" [format]="rupiah" />
                 </app-panel>
                 <app-panel title="Top 10 produk" [loading]="top.isLoading()" [error]="!!top.error()" [empty]="!top.value()?.length">
+                    <app-category-filter panel-actions [(category)]="topCategory" [(detail)]="topDetail" />
                     <div class="tbl-wrap">
                         <table class="tbl">
                             <thead><tr><th>Menu</th><th>Kategori</th><th class="r">Qty</th><th class="r">Revenue</th></tr></thead>
@@ -62,6 +65,7 @@ const TREND_LABEL: Record<string, string> = { naik: 'Naik', turun: 'Turun', stag
             </div>
 
             <app-panel title="Performa menu" [loading]="menus.isLoading()" [error]="!!menus.error()" [empty]="!menus.value()?.length">
+                <app-category-filter panel-actions [(category)]="menuCategory" [(detail)]="menuDetail" />
                 <div class="tbl-wrap">
                     <table class="tbl">
                         <thead>
@@ -91,6 +95,11 @@ const TREND_LABEL: Record<string, string> = { naik: 'Naik', turun: 'Turun', stag
             </app-panel>
 
             <app-panel title="Daftar bill" [loading]="bills.isLoading()" [error]="!!bills.error()" [empty]="!bills.value()?.rows?.length">
+                @if (exportHref(); as href) {
+                    <a panel-actions class="btn btn-ghost btn-icon" [href]="href" download>
+                        <tui-icon icon="@tui.download" /> Export Excel
+                    </a>
+                }
                 <div class="tbl-wrap">
                     <table class="tbl">
                         <thead><tr><th>No. bill</th><th>Tanggal</th><th>Outlet</th><th class="r">Grand total</th></tr></thead>
@@ -140,10 +149,27 @@ export class Sales {
     protected readonly hourly = apiResource<HourlyRow[]>('/sales/hourly');
     // Revenue-by-outlet is a cross-outlet comparison, so it ignores the outlet filter.
     protected readonly outlets = apiResource<OutletRevenueRow[]>('/sales/revenue-by-outlet', { useOutlet: false });
-    protected readonly top = apiResource<TopProduct[]>('/sales/top-products', { extra: () => ({ sortBy: 'revenue', limit: 10 }) });
-    protected readonly menus = apiResource<MenuPerformanceRow[]>('/sales/menu-performance');
+    // Each menu panel has its own category filter (API ids; '' = all).
+    protected readonly topCategory = signal('');
+    protected readonly topDetail = signal('');
+    protected readonly menuCategory = signal('');
+    protected readonly menuDetail = signal('');
+    protected readonly top = apiResource<TopProduct[]>('/sales/top-products', {
+        extra: () => ({ sortBy: 'revenue', limit: 10, category: this.topCategory(), categoryDetail: this.topDetail() }),
+    });
+    protected readonly menus = apiResource<MenuPerformanceRow[]>('/sales/menu-performance', {
+        extra: () => ({ category: this.menuCategory(), categoryDetail: this.menuDetail() }),
+    });
     protected readonly bills = apiResource<BillsPage>('/sales/bills', {
         extra: () => ({ page: this.page(), pageSize: this.pageSize }),
+    });
+
+    /** Plain link so the browser downloads with the session cookie; same filters as the list. */
+    protected readonly exportHref = computed(() => {
+        if (!this.filters.valid()) return null;
+        const params = new URLSearchParams({ ...this.filters.range(), format: 'xlsx' });
+        if (this.filters.outlet()) params.set('outlet', this.filters.outlet());
+        return `/api/sales/bills/export?${params}`;
     });
 
     protected readonly avgBill = computed(() => {

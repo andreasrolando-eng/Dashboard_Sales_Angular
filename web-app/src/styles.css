@@ -117,7 +117,7 @@
 
 .card, .kpi, .filter-bar { background: var(--app-card); border: 1px solid var(--app-line); border-radius: var(--app-radius); box-shadow: var(--app-shadow); }
 .card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.15rem 1.25rem; min-inline-size: 0; }
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .card-head h3 { margin: 0; font-size: 1rem; font-weight: 600; }
 .state { margin: 0; padding: 1.75rem 0; text-align: center; color: var(--app-muted); }
 .state-error { color: var(--app-neg); }
@@ -197,6 +197,9 @@ app-kpi > .kpi, app-panel > .card { block-size: 100%; }
     padding: 0.55rem 1rem; background: var(--app-primary); color: #fff; }
 .btn:hover:not(:disabled) { background: var(--app-primary-hover); }
 .btn:disabled { opacity: 0.45; cursor: default; }
+a.btn { text-decoration: none; }
+.btn-icon { display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-icon tui-icon { font-size: 1rem; }
 .btn-ghost { background: var(--app-hover); color: var(--app-text); }
 .btn-ghost:hover:not(:disabled) { background: var(--app-line); }
 .btn-danger { background: transparent; color: var(--app-neg); padding: 0.3rem 0.6rem; }
@@ -263,6 +266,8 @@ app-kpi > .kpi, app-panel > .card { block-size: 100%; }
 }
 
 /* ---------- Select (custom dropdown, rounded popover) ---------- */
+.cat-filter { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cat-filter .sel-trigger { min-inline-size: 10rem; }
 .sel { position: relative; display: inline-block; }
 .sel-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-inline-size: 12.5rem; cursor: pointer;
     font: inherit; font-size: 0.875rem; text-align: start; color: var(--app-text); background: var(--app-card); border: 1px solid var(--app-line);
