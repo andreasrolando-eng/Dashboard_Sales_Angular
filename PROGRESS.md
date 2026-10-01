@@ -2,7 +2,7 @@
 
 Rewrite dashboard-sales dari Next.js/Supabase ke Angular+Go+PostgreSQL (standar tim Operations ESB, skill `esb-ops-dev-stack`). Repo lama (Next.js) di `D:\KANTOR\dashboard sales` — **masih production, tidak disentuh sama sekali** oleh rewrite ini.
 
-Update terakhir: 2026-09-29 (M3b + M5 selesai; sidebar layout diperbaiki; M4 ditunda sampai semua milestone lain selesai — source MCP lama tidak ada di mesin ini).
+Update terakhir: 2026-10-01 (sejak 09-29: login lokal, deploy demo Railway, sinkron manual satu mode, segmen Non Sales — detail di bagian bertanggal paling bawah; M4 tetap ditunda sampai milestone lain selesai — source MCP lama tidak ada di mesin ini).
 
 ## Cara lanjut di sesi baru — baca ini dulu
 
@@ -114,7 +114,7 @@ Email + password, dibuat atas permintaan user karena SSO ditunda. **Catatan:** s
 
 ## Yang perlu diminta ke Eka / belum beres
 
-- [ ] Repo `dashboard-sales-v2` belum ada di org **Operations-ESB** — masih lokal saja, belum di-push kemana pun.
+- [ ] Repo `dashboard-sales-v2` belum ada di org **Operations-ESB** — sementara di-push ke repo pribadi `andreasrolando-eng/Dashboard_Sales_Angular` (remote `origin`).
 - [ ] Starter resmi **esb-angular-starter** belum ada — layout `web-app` perlu diselaraskan begitu ada.
 - [ ] Client `operations-sso` production (kalau nanti SSO dikerjakan).
 - [ ] Kredensial `ESB_API_BASE_URL`/`ESB_API_KEY` production (yang di `.env` sekarang kemungkinan staging).
@@ -122,6 +122,8 @@ Email + password, dibuat atas permintaan user karena SSO ditunda. **Catatan:** s
 ## Next step yang disarankan
 
 M4 ditunda (keputusan user: dikerjakan terakhir; butuh source `mcp-server/` dari repo lama `andreasrolando-eng/Dashboard-Sales`). Sisa: M6 (deploy — butuh repo di org Operations-ESB dulu), lalu M4. SSO juga masih ditunda.
+
+Keputusan terbuka: apakah sync harian juga me-refresh N hari terakhir, supaya void susulan masuk otomatis tanpa Sinkron manual (lihat "Celah yang perlu diketahui" di bagian Sinkron manual).
 
 ## Deploy demo Railway (2026-09-30)
 `Dockerfile` + `.dockerignore` + `railway.json` di root: satu container (Angular disajikan oleh API Go lewat `STATIC_DIR`, `handler.SPA`), migration otomatis saat start, membaca `$PORT`. Pool koneksi DB diatur untuk Postgres terkelola (idle 2 menit). Diuji lokal dengan Postgres kosong + `PORT=7777`: migration, SPA/deep link, cache bundle, 401 tanpa login, login+cookie, restart idempoten, dan alur browser. Panduan: `docs/deploy-railway.md`. Production tetap `docs/deploy-production.md`.
