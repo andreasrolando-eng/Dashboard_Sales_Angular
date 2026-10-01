@@ -19,6 +19,7 @@ const LOG_KIND: Record<string, string> = {
     'sync-esb': 'Harian',
     'sync-esb-manual': 'Manual',
     'sync-esb-manual-refresh': 'Manual',
+    'sync-esb-refresh': 'Harian (perbarui)',
 };
 
 interface DatedChange extends StatusChange { date: string }

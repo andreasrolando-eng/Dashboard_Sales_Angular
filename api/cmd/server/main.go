@@ -105,6 +105,7 @@ func startSyncScheduler(cfg config.Config, gormDB *gorm.DB) {
 		Cfg: etl.SchedulerConfig{
 			Hour:            cfg.SyncHourWIB,
 			CatchupDays:     cfg.SyncCatchupDays,
+			RefreshDays:     cfg.SyncRefreshDays,
 			AlertWebhookURL: cfg.SyncAlertWebhookURL,
 			HealthchecksURL: cfg.HealthchecksPingURL,
 		},

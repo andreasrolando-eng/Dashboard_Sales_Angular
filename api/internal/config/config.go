@@ -42,6 +42,7 @@ type Config struct {
 	SyncSchedulerEnabled bool
 	SyncHourWIB          int
 	SyncCatchupDays      int
+	SyncRefreshDays      int
 	SyncAlertWebhookURL  string
 }
 
@@ -88,6 +89,7 @@ func Load() Config {
 		SyncSchedulerEnabled: getEnvBool("SYNC_SCHEDULER_ENABLED", appEnv == "production"),
 		SyncHourWIB:          getEnvInt("SYNC_HOUR_WIB", 6),
 		SyncCatchupDays:      getEnvInt("SYNC_CATCHUP_DAYS", 7),
+		SyncRefreshDays:      getEnvInt("SYNC_REFRESH_DAYS", 3),
 		SyncAlertWebhookURL:  getEnv("SYNC_ALERT_WEBHOOK_URL", ""),
 	}
 }

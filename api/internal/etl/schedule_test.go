@@ -172,3 +172,91 @@ func TestScheduler_RunOnce_SkipsWhenAnotherInstanceHoldsLock(t *testing.T) {
 		t.Errorf("results=%d skipped=%v err=%v, want skipped with nothing synced", len(results), skipped, err)
 	}
 }
+
+func TestRefreshDates(t *testing.T) {
+	now := time.Date(2026, 2, 10, 6, 0, 0, 0, etl.WIB) // yesterday = Feb 9
+	skip := []time.Time{time.Date(2026, 2, 9, 0, 0, 0, 0, time.UTC)}
+	var days []string
+	for _, d := range etl.RefreshDates(now, 3, skip) {
+		days = append(days, d.Format("2006-01-02"))
+	}
+	if got, want := strings.Join(days, ","), "2026-02-07,2026-02-08"; got != want {
+		t.Errorf("RefreshDates = %s, want %s", got, want)
+	}
+	if got := etl.RefreshDates(now, 0, nil); len(got) != 0 {
+		t.Errorf("RefreshDates with 0 days = %v, want none", got)
+	}
+}
+
+func TestScheduler_RunOnce_RefreshesRecentDaysAndPicksUpVoids(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+
+	var mu sync.Mutex
+	status := "Finished"
+	fetched := map[string]int{}
+	esb := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		date := r.URL.Query().Get("salesDateFrom")
+		mu.Lock()
+		fetched[date]++
+		st := status
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]map[string]any{
+			{"salesNum": "SN-" + date, "salesDate": date, "branchCode": "BR01", "grandTotal": 1000, "statusName": st},
+		})
+	}))
+	defer esb.Close()
+
+	s := &etl.Scheduler{
+		DB: db, Client: etl.NewClient(esb.URL, "k"),
+		Cfg: etl.SchedulerConfig{Hour: 6, CatchupDays: 3, RefreshDays: 2},
+		Now: func() time.Time { return time.Date(2026, 2, 10, 6, 0, 0, 0, etl.WIB) }, // window Feb 7..9
+	}
+
+	// First run: all three days are missing, so nothing is refreshed on top.
+	results, _, err := s.RunOnce(context.Background())
+	if err != nil || len(results) != 3 {
+		t.Fatalf("first run: results=%d err=%v, want 3 catch-up days", len(results), err)
+	}
+	if fetched["2026-02-08"] != 1 || fetched["2026-02-09"] != 1 {
+		t.Errorf("first run fetched %v, want each day once (no refresh of days just synced)", fetched)
+	}
+
+	// The Feb 9 bill is voided in ESB after it was synced.
+	mu.Lock()
+	status = "Void"
+	mu.Unlock()
+
+	results, _, err = s.RunOnce(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dates []string
+	for _, r := range results {
+		dates = append(dates, r.Date)
+	}
+	if got, want := strings.Join(dates, ","), "2026-02-08,2026-02-09"; got != want {
+		t.Fatalf("second run synced %s, want only the %d refresh days %s", got, s.Cfg.RefreshDays, want)
+	}
+	feb9 := results[1]
+	if len(feb9.StatusChanges) != 1 || feb9.StatusChanges[0].From != "Finished" || feb9.StatusChanges[0].To != "Void" {
+		t.Errorf("Feb 9 status changes = %+v, want one Finished → Void", feb9.StatusChanges)
+	}
+
+	var stored model.RawSale
+	if err := db.Where("sales_num = ?", "SN-2026-02-09").First(&stored).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.StatusName == nil || *stored.StatusName != "Void" {
+		t.Errorf("stored status = %v, want Void after refresh", stored.StatusName)
+	}
+
+	// Refresh runs are logged under their own job name and never count as a
+	// nightly sync, so they cannot hide a missing day from catch-up.
+	var refreshLogs, nightly int64
+	db.Model(&model.SyncLog{}).Where("job_name = ?", etl.RefreshJobName).Count(&refreshLogs)
+	db.Model(&model.SyncLog{}).Where("job_name = ?", "sync-esb").Count(&nightly)
+	if refreshLogs != 2 || nightly != 3 {
+		t.Errorf("sync_logs refresh=%d nightly=%d, want 2 and 3", refreshLogs, nightly)
+	}
+}

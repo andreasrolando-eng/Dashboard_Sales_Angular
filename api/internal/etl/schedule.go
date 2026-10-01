@@ -61,10 +61,32 @@ func MissingDates(db *gorm.DB, now time.Time, lookbackDays int) ([]time.Time, er
 	return missing, nil
 }
 
+// RefreshDates returns, oldest first, the days in the refreshDays days ending
+// yesterday (WIB) that are not in skip. The nightly run re-fetches them
+// because ESB keeps returning a bill under its original transaction date
+// after it is voided later, and catch-up alone never looks at a day again
+// once it synced successfully.
+func RefreshDates(now time.Time, refreshDays int, skip []time.Time) []time.Time {
+	skipped := make(map[string]bool, len(skip))
+	for _, d := range skip {
+		skipped[d.Format("2006-01-02")] = true
+	}
+	yesterday := now.In(WIB).AddDate(0, 0, -1)
+	var dates []time.Time
+	for i := refreshDays - 1; i >= 0; i-- {
+		d := yesterday.AddDate(0, 0, -i)
+		if !skipped[d.Format("2006-01-02")] {
+			dates = append(dates, time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.UTC))
+		}
+	}
+	return dates
+}
+
 // SchedulerConfig configures the in-process nightly sync.
 type SchedulerConfig struct {
 	Hour            int    // WIB hour of the daily run
 	CatchupDays     int    // how far back to look for unsynced days
+	RefreshDays     int    // already-synced recent days to re-fetch each run; 0 disables
 	AlertWebhookURL string // Slack/Discord-compatible incoming webhook; empty disables alerts
 	HealthchecksURL string // optional healthchecks.io ping
 }
@@ -101,11 +123,20 @@ func WithSyncLock(db *gorm.DB, fn func() error) (acquired bool, err error) {
 	return acquired, err
 }
 
-// RunOnce syncs every missing day in the catch-up window. It returns nil
-// summaries (skipped=true) if another instance holds the advisory lock.
+// RefreshJobName is the job_name of the nightly re-fetch of recent days. It
+// differs from "sync-esb" so it never counts toward catch-up or "last sync".
+const RefreshJobName = "sync-esb-refresh"
+
+// RunOnce syncs every missing day in the catch-up window, then re-fetches
+// (upsert, with change report) the RefreshDays most recent days that were
+// already synced. Results hold the missing days first, then the refreshed
+// ones. It returns nil summaries (skipped=true) if another instance holds the
+// advisory lock.
 func (s *Scheduler) RunOnce(ctx context.Context) (results []DaySyncResult, skipped bool, err error) {
+	var refreshed []DaySyncResult
 	acquired, err := WithSyncLock(s.DB, func() error {
-		dates, err := MissingDates(s.DB, s.now(), s.Cfg.CatchupDays)
+		now := s.now()
+		dates, err := MissingDates(s.DB, now, s.Cfg.CatchupDays)
 		if err != nil {
 			return err
 		}
@@ -115,8 +146,17 @@ func (s *Scheduler) RunOnce(ctx context.Context) (results []DaySyncResult, skipp
 			}
 			results = append(results, SyncDay(ctx, s.DB, s.Client, d.Format("2006-01-02")))
 		}
+		// Days just synced (or just failed, retried next run) are skipped.
+		for _, d := range RefreshDates(now, s.Cfg.RefreshDays, dates) {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			refreshed = append(refreshed, SyncDayWith(ctx, s.DB, s.Client, d.Format("2006-01-02"),
+				SyncOptions{Mode: ModeUpsert, JobName: RefreshJobName, ReportChanges: true}))
+		}
 		return nil
 	})
+	results = append(results, refreshed...)
 	skipped = !acquired
 	if err != nil {
 		return results, skipped, err
@@ -129,15 +169,22 @@ func (s *Scheduler) RunOnce(ctx context.Context) (results []DaySyncResult, skipp
 }
 
 func (s *Scheduler) report(results []DaySyncResult) {
-	var failed []string
+	var failed, changes []string
 	rows := 0
 	for _, r := range results {
 		rows += r.Outlets + r.Sales + r.Payments + r.MenuItems
 		if !r.OK {
 			failed = append(failed, fmt.Sprintf("%s (%s)", r.Date, r.Error))
 		}
+		for _, c := range r.StatusChanges {
+			changes = append(changes, fmt.Sprintf("%s %s %s→%s", r.Date, c.SalesNum, c.From, c.To))
+		}
 	}
-	summary := fmt.Sprintf("sync-esb scheduled: %d day(s), %d rows, %d failed", len(results), rows, len(failed))
+	summary := fmt.Sprintf("sync-esb scheduled: %d day(s), %d rows, %d failed, %d status change(s)",
+		len(results), rows, len(failed), len(changes))
+	if len(changes) > 0 {
+		log.Print("sync-esb refresh status changes: " + strings.Join(changes, "; "))
+	}
 	log.Print(summary)
 	PingHealthchecks(s.Cfg.HealthchecksURL, summary, len(failed) > 0)
 	if len(failed) > 0 {

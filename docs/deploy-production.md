@@ -76,7 +76,7 @@ Salin `.env.production.example` ke `/opt/apps/<slug>/.env` lalu isi. Variabel wa
 
 Opsional: `SYNC_ALERT_WEBHOOK_URL` (Slack/Discord, dipanggil bila ada hari yang gagal sinkron),
 `HEALTHCHECKS_PING_URL`, `SESSION_TTL_HOURS` (default 12), `SYNC_HOUR_WIB` (default 6),
-`SYNC_CATCHUP_DAYS` (default 7), `COOKIE_SECURE`.
+`SYNC_CATCHUP_DAYS` (default 7), `SYNC_REFRESH_DAYS` (default 3, tarik ulang hari yang sudah tersinkron supaya void susulan masuk; 0 = mati), `COOKIE_SECURE`.
 
 Dua jebakan:
 1. **`deploy.sh` men-`source` file ini.** Nilai yang mengandung spasi, `<`, `>`, `&`, `#`, `$`
